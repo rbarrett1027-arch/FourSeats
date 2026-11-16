@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="description" content="Four Seats: a classroom simulation on responsibility, ethical theory and AI.">
+<title>Four Seats</title>
+<style>
+:root {
+  /* Layout: a printed case study. One narrow serif column, ruled sections, exhibits set as documents. One step per screen. */
+  --paper: #ffffff;
+  --ink: #151515;
+  --muted: #5d5d5d;
+  --rule: #c9c9c9;
+  --wash: #f3f3f1;
+  --accent: #7a1f2b;
+  --good: #1f5f3a;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: "SFMono-Regular", Menlo, Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #141414; --ink: #ececec; --muted: #a3a3a3; --rule: #3d3d3d; --wash: #1f1f1f; --accent: #e59aa3; --good: #7fd0a0; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --paper: #141414; --ink: #ececec; --muted: #a3a3a3; --rule: #3d3d3d; --wash: #1f1f1f; --accent: #e59aa3; --good: #7fd0a0; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font-family: var(--serif); font-size: 18px; line-height: 1.55; }
+.wrap { max-width: 680px; margin: 0 auto; padding: 20px 20px 72px; display: flex; flex-direction: column; gap: 20px; }
+.top { display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--ink); padding-bottom: 8px; }
+.top .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; font-family: var(--sans); font-size: 12.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.top .name { color: var(--ink); font-weight: 700; }
+.bar { height: 2px; background: var(--rule); } .bar i { display: block; height: 100%; background: var(--ink); }
+.part { font-family: var(--sans); font-size: 12.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); margin: 4px 0 0; }
+h1 { font-family: var(--serif); font-weight: 700; font-size: clamp(27px, 5.2vw, 36px); line-height: 1.12; margin: 4px 0 0; text-wrap: balance; }
+main { display: flex; flex-direction: column; gap: 20px; }
+p { margin: 0; max-width: 64ch; }
+.lead { font-size: 20.5px; line-height: 1.45; }
+.tag { display: block; font-family: var(--sans); font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.case { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--rule); padding: 12px 0 14px; }
+.case ul { margin: 8px 0 0; padding-left: 20px; } .case li { margin: 5px 0; }
+.doc { border: 1px solid var(--ink); background: var(--wash); }
+.doc .hd { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 7px 14px; border-bottom: 1px solid var(--ink); font-family: var(--sans); font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.doc .hd span + span { color: var(--muted); font-weight: 400; }
+.doc .bd { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 9px; }
+.doc .meta { font-family: var(--mono); font-size: 14px; color: var(--muted); display: grid; grid-template-columns: auto 1fr; gap: 1px 12px; }
+.doc .meta b { font-weight: 400; color: var(--ink); }
+.doc .foot { font-family: var(--sans); font-size: 13px; color: var(--muted); }
+.term { border-top: 3px double var(--ink); border-bottom: 1px solid var(--ink); padding: 12px 0 14px; }
+.term .tag { color: var(--accent); }
+.term h2 { font-family: var(--serif); font-size: 23px; font-style: italic; margin: 0 0 6px; }
+.term p + p { margin-top: 8px; }
+.term .src { font-family: var(--sans); color: var(--muted); font-size: 13.5px; margin-top: 10px; }
+.objection { border-left: 0; background: var(--wash); padding: 14px 16px; }
+.objection .tag { color: var(--accent); }
+.q { display: flex; flex-direction: column; gap: 8px; }
+.q > label, .q > .label { font-weight: 700; }
+.hint { font-family: var(--sans); color: var(--muted); font-size: 14px; font-weight: 400; }
+textarea, input[type="text"], input[type="number"] { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); border-radius: 0; padding: 10px 12px; width: 100%; }
+textarea { resize: vertical; min-height: 88px; }
+.opts { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--ink); }
+.opts.row { flex-direction: row; flex-wrap: wrap; }
+.opt { position: relative; display: block; border-bottom: 1px solid var(--rule); }
+.opts.row .opt { flex: 1 1 auto; border-bottom: 0; border-right: 1px solid var(--rule); }
+.opt:last-child { border-bottom: 0; border-right: 0; }
+.opt input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.opt input:disabled { cursor: default; }
+.opt span { display: grid; grid-template-columns: auto 1fr; gap: 12px; padding: 10px 14px; align-items: baseline; }
+.opt span i { font-family: var(--sans); font-style: normal; font-weight: 700; font-size: 14px; color: var(--muted); }
+.opts.row .opt span { display: block; text-align: center; }
+.opt input:checked + span { background: var(--ink); color: var(--paper); } .opt input:checked + span i { color: var(--paper); }
+.opt input:disabled:not(:checked) + span { color: var(--muted); }
+.opt input:focus-visible + span, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+button { font-family: var(--sans); font-size: 15px; font-weight: 700; letter-spacing: .03em; border-radius: 0; padding: 12px 20px; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; }
+button.primary { background: var(--ink); color: var(--paper); }
+button.small { padding: 6px 12px; }
+button:disabled { opacity: .35; cursor: not-allowed; }
+.split { display: flex; flex-direction: column; border: 1px solid var(--ink); }
+.split .rowx { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--rule); }
+.split .rowx:last-child { border-bottom: 0; }
+.split .ctl { display: flex; align-items: center; gap: 6px; }
+.split input { width: 74px; text-align: center; font-variant-numeric: tabular-nums; padding: 6px; }
+.total { font-family: var(--sans); font-weight: 700; font-variant-numeric: tabular-nums; } .total.bad { color: var(--accent); }
+.numrow { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; } .numrow input { width: 150px; font-variant-numeric: tabular-nums; }
+.fb { font-family: var(--sans); font-size: 15px; } .fb.good { color: var(--good); font-weight: 700; } .fb.bad { color: var(--accent); font-weight: 700; }
+.work { background: var(--wash); padding: 10px 14px; font-size: 16.5px; }
+.cases { display: flex; flex-direction: column; gap: 16px; }
+.cases .item { border-top: 1px solid var(--ink); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.cases .sub { font-family: var(--sans); color: var(--muted); font-size: 14px; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 16.5px; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+th, td { text-align: left; padding: 7px 10px 7px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--sans); font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); border-bottom: 1px solid var(--ink); }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; padding-right: 0; padding-left: 10px; }
+.nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; border-top: 1px solid var(--ink); padding-top: 16px; }
+.nav .why { font-family: var(--sans); color: var(--muted); font-size: 14px; flex: 1; text-align: right; min-width: 180px; }
+.sum h2 { font-family: var(--sans); font-size: 13px; letter-spacing: .09em; text-transform: uppercase; margin: 22px 0 8px; padding-top: 10px; border-top: 1px solid var(--ink); }
+.sum dl { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.sum dt { font-family: var(--sans); color: var(--muted); font-size: 13.5px; }
+.sum dd { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.share { background: var(--wash); padding: 14px 16px; } .share ul { margin: 6px 0 0; padding-left: 20px; }
+.tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 18px; }
+[hidden] { display: none !important; }
+@media print { .nav, .tools, .top { display: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="row"><span class="name" id="lesson-name"></span><span id="step-count"></span></div>
+    <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+  </div>
+  <div>
+    <p class="part" id="part"></p>
+    <h1 id="title" tabindex="-1"></h1>
+  </div>
+  <main id="main"></main>
+  <div class="nav">
+    <button type="button" id="back">Back</button>
+    <span class="why" id="why" role="status"></span>
+    <button type="button" class="primary" id="next">Next</button>
+  </div>
+</div>
+<script>
+(function () {
+  var BASE = 312;
+  var SEATS = [
+    { k: "s1", role: "The programmer", title: "Seat 1: You write the code",
+      scene: "You are a machine-learning engineer at Siftline, a software vendor. Your team is building a tool that screens job applications for a large client. Launch is in three weeks.",
+      docs: [
+        { label: "Exhibit 1A", kind: "Chat message", meta: [["From", "Your manager"], ["To", "You"]], body: ["Client just sent ten years of their hiring history. Use it. It’s a first pass and their HR people will look at anything it rejects. We can’t slip the date."] },
+        { label: "Exhibit 1B", kind: "Summary of the client’s data", table: { head: ["Ten years of applications", ""], num: [1], rows: [["Applications received", "41,200"], ["Invited to interview", "3,150"], ["Share of interviews that went to graduates of the same 14 schools", "71%"], ["Interview rate, no gap in work history", "9%"], ["Interview rate, gap of six months or more", "4%"]] }, foot: "A clean, independently checked data set would take about four months to build." } ],
+      asks: [
+        { v: "a", q: "Who made these past hiring decisions, and how?", a: "Mostly four senior recruiters, reading each résumé for about thirty seconds. Nobody ever checked whether the people they turned down could have done the job." },
+        { v: "b", q: "Will anyone at the client review what the tool rejects?", a: "Your manager believes so. When you ask where that is written down, the answer is that it came up on a call." },
+        { v: "c", q: "What happens to the contract if we slip?", a: "There is a penalty clause: 10% of the fee for every month of delay." } ],
+      opts: { fast: "Train the tool on the client’s past decisions and ship on time.", fig: "Ship on time, and file a written note in the project tracker that the training data may carry past bias.", slow: "Refuse to ship on this data. Ask for four months to build a clean set." },
+      short: { fast: "Trained it on past hiring decisions", fig: "Shipped, and filed a note about possible bias", slow: "Asked for four months to build clean data" },
+      out: { fast: "You ship on time. The tool agrees with the client’s past decisions 94% of the time. Your manager thanks you in the team meeting.",
+        fig: "You ship on time. Two days later your note is closed: “Won’t fix. Client’s responsibility.” You feel covered.",
+        slow: "Launch slips four months and the penalty clause kicks in. Your manager is not pleased, and the next big project goes to someone else." },
+      cost: "Four months’ delay, a contract penalty, and the programmer loses the next big project.", told: "“Their HR people will look at anything it rejects.”", factor: 0.35,
+      objection: "The programmer was told in plain words that the client’s HR staff would review every rejection. Relying on a safeguard someone else has promised is how all teamwork runs. If that is blameworthy, so is trusting any colleague. Why is this case different?" },
+    { k: "s2", role: "The vendor", title: "Seat 2: You sell the product",
+      scene: "New seat, fresh start. Assume the person before you took the quickest option. You are head of product at Siftline. The tool is built and it tests well.",
+      docs: [
+        { label: "Exhibit 2A", kind: "Test report, page 1", table: { head: ["Measure", "Result"], num: [1], rows: [["Agreement with the client’s past hiring decisions", "94%"], ["Tested against later job performance", "Not tested"], ["Tested for different results across groups of applicants", "Not tested"]] } },
+        { label: "Exhibit 2B", kind: "Email", meta: [["From", "General counsel"], ["To", "You"]], body: ["Recommend we add to the manual: “Do not reject applicants without human review.” That moves the risk to the customer."] },
+        { label: "Exhibit 2C", kind: "Chat message", meta: [["From", "Head of sales"], ["To", "You"]], body: ["Customers buy this to stop reading résumés. If we force a click on every rejection we lose to anyone who runs unattended. Every customer tests before going live anyway. That part is their job."] } ],
+      asks: [
+        { v: "a", q: "What does “94% accurate” actually measure?", a: "Agreement with what the client’s recruiters did in the past. It says nothing about whether the people it rejects could do the job. Nobody has that data." },
+        { v: "b", q: "How many customers really test before going live?", a: "Sales does not track it. A support engineer guesses one in five." },
+        { v: "c", q: "What would a forced human-approval step cost us?", a: "Sales estimates that two of our six large prospects would walk." } ],
+      opts: { fast: "Put the lawyer’s warning in the manual and sell the tool as it is.", fig: "Add an optional “human review” setting, switched off by default.", slow: "Build in a lock: no rejection goes out until a human approves it." },
+      short: { fast: "Put a warning in the manual", fig: "Added a review setting, off by default", slow: "Built in a human-approval lock" },
+      out: { fast: "The warning goes on page 47. Sales beat the target for the quarter.",
+        fig: "The setting ships switched off. A year on, support reports that 3 of 40 customers ever turned it on. Sales beat the target.",
+        slow: "Two large prospects pick a competitor whose tool runs unattended. You miss your sales target." },
+      cost: "Two large customers lost, and a missed sales target.", told: "“Every customer tests before going live. That part is their job.”", factor: 0.25,
+      objection: "The vendor sold a legal product that did what the test report said, and put the warning in writing. Customers are adults who chose not to read page 47 and not to test. Why should a seller answer for a buyer’s shortcuts?" },
+    { k: "s3", role: "The buyer", title: "Seat 3: You buy it",
+      scene: "New seat, fresh start. Assume the people before you took the quickest option. You are vice president of talent at Harlow Freight. You get 9,000 applications a year and your recruiting team is three people.",
+      docs: [
+        { label: "Exhibit 3A", kind: "Email", meta: [["From", "Chief financial officer"], ["To", "You"]], body: ["I need hiring costs down 30% by the end of the quarter. Tell me how."] },
+        { label: "Exhibit 3B", kind: "Siftline sales sheet", body: ["Certified 94% accurate. Human-in-the-loop ready. Cuts screening time by up to 90%.", "Launch discount of 25% if signed this month."], foot: "A six-week side-by-side test with your own recruiters would cost about $40,000 in staff time. The discount expires first." } ],
+      asks: [
+        { v: "a", q: "Certified by whom?", a: "By Siftline’s own quality team, against Siftline’s own benchmark." },
+        { v: "b", q: "Does my HR manager have time to review what it rejects?", a: "She has about six hours a week for every open search combined." },
+        { v: "c", q: "What did other customers find?", a: "The vendor arranges two reference calls. Both customers went live without testing. Both report big time savings. Neither has checked who was rejected." } ],
+      opts: { fast: "Sign the contract and switch it on.", fig: "Switch it on, and email HR to “keep an eye on it.”", slow: "Run the six-week side-by-side test before trusting it." },
+      short: { fast: "Switched it on without a test", fig: "Switched it on and asked HR to keep an eye on it", slow: "Ran a six-week test first" },
+      out: { fast: "It goes live on Monday. You report a 30% cost cut to the CFO and get the discount.",
+        fig: "It goes live on Monday. Your one-line email sets aside no time and asks for no report. Nothing comes back. You get the discount.",
+        slow: "You lose the discount and miss the savings goal this quarter. The CFO makes a note of it." },
+      cost: "Six weeks, about $40,000, the discount, and a missed savings goal.", told: "“Certified 94% accurate. Human-in-the-loop ready.”", factor: 0.15,
+      objection: "The buyer relied on a certification and a vendor’s assurance, as buyers of software do every day, and was under orders to cut costs. Nobody runs a six-week trial of their email system either. Why is this purchase different?" },
+    { k: "s4", role: "The HR manager", title: "Seat 4: You use it",
+      scene: "Last seat, fresh start. Assume the people before you took the quickest option. You are the HR manager at Harlow Freight. It is Monday morning.",
+      docs: [
+        { label: "Exhibit 4A", kind: "Screening dashboard, this week", table: { head: ["Three open jobs", ""], num: [1], rows: [["Applications received", "412"], ["Rejected by the tool", "371"], ["Passed to you", "41"], ["Your hours available for all three searches", "6"], ["Hours needed to read every rejection", "about 30"], ["Hours needed to read 20 at random", "2"]] } },
+        { label: "Exhibit 4B", kind: "Chat message", meta: [["From", "Your vice president"], ["To", "You"]], body: ["It was tested and certified. Trust the tool. That is why we bought it. Shortlists by Wednesday please."] } ],
+      asks: [
+        { v: "a", q: "What do the rejected applications look like?", a: "You open three at random. Two look weak. The third has eight years of directly relevant experience and a 14-month gap in 2021." },
+        { v: "b", q: "Does the manual say anything about reviewing rejections?", a: "Page 47: “Do not reject applicants without human review.” Nobody mentioned it in the training session." },
+        { v: "c", q: "What happens when shortlists are late?", a: "A colleague’s were late twice last quarter. It came up in her performance review." } ],
+      opts: { fast: "Accept the rejections and start interviewing the 41.", fig: "Read the 41 it passed with extra care before you interview.", slow: "Read twenty of the rejected applications every week." },
+      short: { fast: "Accepted the tool’s rejections", fig: "Double-checked the ones it passed", slow: "Checked twenty rejections a week" },
+      out: { fast: "All three shortlists go out by Wednesday. The hiring managers are delighted.",
+        fig: "You catch one weak candidate among the 41. The 371 stay unread. Shortlists go out Wednesday.",
+        slow: "Two extra hours every week on top of a full load. Shortlists go out late, and three hiring managers complain to your boss." },
+      cost: "Two hours a week, late shortlists, and complaints to the boss.", told: "“It was tested and certified. Trust the tool.”", factor: 0.2,
+      objection: "The HR manager had six hours, a boss who said to trust the tool, and no say over how it was built, sold or bought. Reading every rejection was impossible. How can the person with the least power carry the most blame?" }
+  ];
+
+  var F = { fast: 1, fig: 0.92 };
+  function fac(s, v) { return v === "slow" ? s.factor : (F[v] || 1); }
+  function harm(a) { var n = BASE; SEATS.forEach(function (s) { n *= fac(s, a[s.k]); }); return Math.round(n); }
+  function seatBy(k) { return SEATS.filter(function (s) { return s.k === k; })[0]; }
+  function lc(x) { return x.charAt(0).toLowerCase() + x.slice(1); }
+  function has(a, k, n) { return String(a[k] || "").trim().length >= (n || 12); }
+  var ROLES = SEATS.map(function (s) { return { v: s.k, label: s.role }; });
+  var ROLEL = {}; SEATS.forEach(function (s) { ROLEL[s.k] = s.role; });
+  function blamed(a) { return (ROLEL[a.blame] || "that person").toLowerCase(); }
+  var TRAD = [{ v: "ari", label: "Aristotle and the virtues" }, { v: "kan", label: "Kant and duties" }, { v: "con", label: "Confucian roles and rituals" }, { v: "ubu", label: "Ubuntu" }];
+  var TRADL = { ari: "Aristotle", kan: "Kant", con: "Confucian ethics", ubu: "Ubuntu" };
+  var TRE = [/aristot|virtue/i, /\bkant|dut(y|ies)/i, /confuci/i, /ubuntu/i];
+  function tradNamed(a) { var t = String(a.section || ""); return TRE.filter(function (r) { return r.test(t); }).length; }
+  var BUILD = [
+    { v: "law", label: "A law. Say who has the duty of care when a tool, not a person, makes the decision." },
+    { v: "ritual", label: "A ritual. Design a recurring practice that keeps the people in the chain face to face with the applicants." },
+    { v: "self", label: "A fix for us. Design something that makes the person in each seat feel their share of a harm they only partly cause." } ];
+  var BUILDL = { law: "A law", ritual: "A ritual", self: "A fix for us" };
+  var BUILDQ = { law: "Write the clause. Name who holds the duty of care, what it requires, and what happens if they fail.",
+    ritual: "Describe the ritual: who takes part, how often, what exactly they do, and what it is meant to keep alive.",
+    self: "Describe it. It cannot be a pill. What does the person see, hear or have to do, and when?" };
+  var BUILDO = { law: "Jacob Turner’s point is that driving law assumed a human driver. Your clause assumes something too. What new kind of tool, five years from now, would slip past your wording?",
+    ritual: "Confucian rituals are valued in themselves, and also for the order they keep. In month eight, yours is a box people tick in under a minute. What keeps it from becoming empty?",
+    self: "Persson and Savulescu say our moral feelings were built for small groups and simple tools. You are trying to make someone feel a harm spread across 9,000 strangers. Why would your design work when a year of news about climate change does not?" };
+  var EXQ = [
+    { v: "e1", label: "Exhibit 1A, the programmer’s manager: “We can’t slip the date.”" },
+    { v: "e2", label: "Exhibit 2B, the vendor’s lawyer: “That moves the risk to the customer.”" },
+    { v: "e3", label: "Exhibit 3A, the buyer’s CFO: “I need hiring costs down 30%.”" },
+    { v: "e4", label: "Exhibit 4B, the vice president: “Trust the tool. That is why we bought it.”" } ];
+  var EXL = { e1: "Exhibit 1A (the manager)", e2: "Exhibit 2B (the lawyer)", e3: "Exhibit 3A (the CFO)", e4: "Exhibit 4B (the vice president)" };
+  var DUTO = [
+    { v: "happy", label: "To count other people’s happiness among your own goals." },
+    { v: "consent", label: "Not to treat people in ways they do not or could not consent to." },
+    { v: "dignity", label: "Not to treat people in ways that fail to honor their dignity." } ];
+  var DUTOL = { happy: "Counting others’ happiness among your goals", consent: "No treatment they could not consent to", dignity: "Honoring their dignity" };
+  var DUTS = [
+    { v: "develop", label: "To develop her own abilities and judgment." },
+    { v: "principle", label: "Never to give up her capacity to act on her own moral principles." } ];
+  var DUTSL = { develop: "Developing her own abilities and judgment", principle: "Keeping her capacity to act on her principles" };
+
+  var steps = [
+    { part: "Start here", title: "Four Seats", blocks: [
+      { t: "p", lead: true, text: "Three parts. First you hold four jobs and make one decision in each. Then three old schools of ethics judge what happened. Then you write what those schools are missing." },
+      { t: "p", text: "Read the exhibits closely. Decisions and several later answers lock, and the app will argue back. Do what you would really do in each seat, with that boss and that deadline." },
+      { t: "p", text: "It takes about 40 minutes. Working with a group? Argue it out before anyone types. The companies, people and figures in this case are invented." },
+      { t: "text", key: "names", rows: 1, max: 120, label: "Who is working on this device?", hint: "First names are fine." }
+    ] }
+  ];
+  SEATS.forEach(function (s, i) {
+    var blocks = [{ t: "case", tag: s.role, text: s.scene }];
+    s.docs.forEach(function (d) { blocks.push(Object.assign({ t: "doc" }, d)); });
+    blocks.push({ t: "choice", key: s.k, lockAfter: s.k, label: "What do you do?", options: [{ v: "fast", label: s.opts.fast }, { v: "fig", label: s.opts.fig }, { v: "slow", label: s.opts.slow }] });
+    blocks.push({ t: "text", key: s.k + "Why", rows: 2, min: 12, label: "Justify it in one sentence, the way you would say it to a coworker." });
+    blocks.push({ t: "reveal", key: s.k, button: "Make the decision. It cannot be undone." });
+    blocks.push({ t: "doc", after: s.k, label: "What happens next", body: function (a) { return s.out[a[s.k]] || ""; } });
+    steps.push({ part: "Part 1: Seat " + (i + 1) + " of 4", title: s.title, blocks: blocks });
+  });
+
+  steps.push(
+    { part: "Part 1: One year later", title: "The audit", blocks: [
+      { t: "p", text: "An outside auditor re-reads a year of applications to Harlow Freight and judges, without the tool, which applicants were qualified." },
+      { t: "doc", label: "Exhibit 5", kind: "Audit findings", table: { head: ["Qualified applicants", "Number", "Passed by the tool"], num: [1, 2], rows: [["No gap in work history", "600", "480"], ["Gap of six months or more", "300", "108"], ["All qualified applicants", "900", "588"]] },
+        foot: "The tool had learned to copy the company’s past hiring. It marked applicants down for a gap in their work history and for degrees from schools the company had rarely hired from." },
+      { t: "num", key: "n1", label: "How many qualified applicants did the tool turn away?", answer: 312, tol: 0, wrong: "Qualified applicants minus those the tool passed.", solution: "900 qualified minus 588 passed leaves 312 qualified people turned away. A qualified applicant with a gap got through 36% of the time; one without, 80%." },
+      { t: "p", lead: true, when: function (a) { return a.n1Ok || (a.n1Tries || 0) >= 3; }, text: function (a) { var n = harm(a); return "At the company, all four people took the quickest option. With your four decisions the number would have been " + (n < 5 ? "close to zero" : n) + "."; } },
+      { t: "table", when: function (a) { return a.n1Ok || (a.n1Tries || 0) >= 3; }, head: ["Seat", "Your decision", "Effect"], rows: function (a) {
+        return SEATS.map(function (s) { var v = a[s.k]; return [s.role, s.short[v] || "", v === "slow" ? "Cut the harm by " + Math.round((1 - s.factor) * 100) + "%. Cost: " + lc(s.cost) : v === "fig" ? "Almost none. It felt responsible and changed very little." : "None. Thanked for it."]; }); } },
+      { t: "p", when: function (a) { return a.n1Ok || (a.n1Tries || 0) >= 3; }, text: "You knew you were playing all four seats. At the company, four different people sat in them, each saw only their own exhibits, and each was told someone else had it covered. From here on, the case is the company’s version: four quick decisions, 312 people." },
+      { t: "choice", key: "blame", lock: true, when: function (a) { return a.n1Ok || (a.n1Tries || 0) >= 3; }, label: "Who do you hold most responsible?", hint: "Your answer locks. The next three steps will test it.", options: ROLES },
+      { t: "text", key: "blameWhy", rows: 2, min: 12, when: function (a) { return !!a.blame; }, label: "Why? One sentence." }
+    ] },
+
+    { part: "Part 2: Three old schools", title: "Aristotle: what kind of person?", blocks: [
+      { t: "p", lead: true, text: function (a) { return "You blamed " + blamed(a) + " for a decision. Aristotle would start somewhere else. He would not ask which decision was wrong. He would ask what kind of person makes it."; } },
+      { t: "term", tag: "Section 2.2", name: "Virtue", def: [
+        "A virtue is a habit: a settled readiness to do the right thing, for the right reason, in the right kind of situation. Nobody is born with one. You build it by practice and by copying people who already have it.",
+        "Each virtue is a middle path between two ways of going wrong. Courage sits between cowardice and recklessness. And the virtues lean on each other: Aristotle thinks you cannot fully have one without the rest." ], src: "Chapter 2, paragraphs 2.21 to 2.24" },
+      { t: "p", text: "Build the middle path for someone who works with an automated tool. One extreme is the person who believes whatever the tool says. The other is the person who refuses to use any tool at all." },
+      { t: "text", key: "vName", rows: 1, max: 60, min: 3, label: "Name the virtue in the middle. Your own word or phrase." },
+      { t: "text", key: "vMonday", rows: 3, min: 30, label: "It is Monday. 412 applications, 371 rejected, six hours. What does the HR manager who has your virtue actually do? Be concrete." },
+      { t: "p", text: "Now responsibility. The HR manager accepted the tool’s rejections on fifty-two Mondays in a row. A habit was forming the whole time." },
+      { t: "choice", key: "vResp", lock: true, label: "On Aristotle’s view, what is she most responsible for?", options: [
+        { v: "act", label: "Each Monday’s decision, taken one at a time." },
+        { v: "char", label: "The person she let herself become over the year." },
+        { v: "none", label: "Neither. Her boss built the habit, not her." }] },
+      { t: "objection", when: function (a) { return !!a.vResp; }, tag: "The other side", text: function (a) {
+        return a.vResp === "act" ? "Taken one at a time, every Monday was defensible: six hours, a boss who said to trust the tool. If each act is excusable, where does the blame come from? Aristotle would say you are looking at the wrong unit."
+          : a.vResp === "char" ? "She did not choose her workload, her boss or the tool. If character is built by the situations you are put in, how much of the person she became is really hers?"
+          : "Then nobody who works under pressure is ever responsible for what they turn into. Aristotle says habits come from our own repeated choices. Did she have no choices on any of fifty-two Mondays?"; } },
+      { t: "text", key: "vReply", rows: 3, min: 30, when: function (a) { return !!a.vResp; }, label: "Answer that." },
+      { t: "text", key: "vModel", rows: 2, min: 20, when: function (a) { return !!a.vResp; }, label: "Aristotle says we learn virtue by copying people who have it. Who do you know that would have read the twenty rejections? What do they do that you would copy?" },
+      { t: "text", key: "vOut", rows: 3, min: 30, when: function (a) { return !!a.vResp; }, label: "Where it runs out. The tool made 9,000 decisions. Can a screening tool have a virtue, a habit of acting for the right reasons? If not, what does virtue ethics have to say about the thing that actually did the rejecting?" }
+    ] },
+
+    { part: "Part 2: Three old schools", title: "Kant: what was owed?", blocks: [
+      { t: "p", lead: true, text: "Kant does not ask what kind of person you are. He asks what you owe, to others and to yourself, whatever it costs you." },
+      { t: "term", tag: "Section 2.4", name: "The formula of humanity", def: [
+        "Treat humanity, in yourself and in every other person, always as an end and never merely as a means.",
+        "Toward others this means two things: count their happiness among your own goals, and respect their will. Respecting their will rules out treating people in ways they do not or could not consent to, and in ways that fail to honor their dignity.",
+        "Toward yourself it means developing your own abilities, and never giving up your capacity to act on your own moral principles." ], src: "Chapter 2, paragraphs 2.47 to 2.51" },
+      { t: "choice", key: "kOther", lock: true, label: "The 312 applicants never knew a tool had rejected them, or why. Which duty to others was most clearly broken?", options: DUTO },
+      { t: "text", key: "kOtherWho", rows: 3, min: 30, when: function (a) { return !!a.kOther; }, label: function (a) { return "Who owed the applicants that duty? You blamed " + blamed(a) + ". Does Kant’s test point to the same seat, or a different one? Say why."; } },
+      { t: "choice", key: "kSelf", lock: true, when: function (a) { return has(a, "kOtherWho", 30); }, label: "“Trust the tool. That is why we bought it.” When the HR manager stopped reading, which duty to herself did she give up?", options: DUTS },
+      { t: "text", key: "kSelfWhy", rows: 2, min: 20, when: function (a) { return !!a.kSelf; }, label: "Explain. What did she lose that she owed it to herself to keep?" },
+      { t: "term", when: function (a) { return has(a, "kSelfWhy", 20); }, tag: "Section 2.4, continued", name: "The universal law formula", def: "Act only on a personal rule, a maxim, that you would be willing to have everyone act on. Write the rule you are following, imagine every person in your position following it, and ask whether you could accept that world.", src: "Chapter 2, paragraphs 2.52 to 2.53" },
+      { t: "text", key: "kMaxim", rows: 2, min: 25, when: function (a) { return has(a, "kSelfWhy", 20); }, label: "Write the maxim the vendor acted on when it put the warning on page 47.", hint: "Shape: “When [situation], I will [action], in order to [goal].”" },
+      { t: "choice", key: "kPass", row: true, lock: true, when: function (a) { return has(a, "kMaxim", 25); }, label: "Every seller of every product now follows that maxim. Could you accept that world?", options: [{ v: "yes", label: "Yes" }, { v: "no", label: "No" }] },
+      { t: "text", key: "kPassWhy", rows: 2, min: 20, when: function (a) { return !!a.kPass; }, label: "Why? Describe one thing in that world that settles it for you." },
+      { t: "text", key: "kOut", rows: 3, min: 30, when: function (a) { return has(a, "kPassWhy", 20); }, label: "Where it runs out. For Kant the tool is a thing, and only persons have duties. At the moment each applicant was rejected, no person was present. Who, exactly, owed that applicant respect at that moment?" }
+    ] },
+
+    { part: "Part 2: Three old schools", title: "Confucius and ubuntu: who are you to each other?", blocks: [
+      { t: "p", lead: true, text: "Two traditions from outside Western philosophy start from a different place again: not the person, and not the rule, but the relationship." },
+      { t: "term", tag: "Section 2.3", name: "Confucian ethics", def: [
+        "Ethics is about building and keeping a harmonious social order. Duties come with the roles you hold toward others, such as parent and child. Rituals matter because they hold that order together.",
+        "Life is a project of self-cultivation. Over a lifetime you become either a profound person, who understands what is moral, or a small person, who understands what is profitable. One guide along the way is a version of the Golden Rule: do not do to others what you would not want for yourself." ], src: "Chapter 2, paragraphs 2.31 to 2.35" },
+      { t: "choice", key: "cSmall", lock: true, label: "Go back through the exhibits in your head. Which one is the clearest picture of a “small person” at work?", options: EXQ },
+      { t: "text", key: "cSmallWhy", rows: 2, min: 20, when: function (a) { return !!a.cSmall; }, label: "Why that one? And what would the profound person in the same role have written?" },
+      { t: "text", key: "cRole", rows: 3, min: 30, when: function (a) { return has(a, "cSmallWhy", 20); }, label: "An employer and a job applicant stand in a role relationship. Name one duty that comes with the employer’s side of it, and one ritual of ordinary hiring that the tool quietly removed." },
+      { t: "term", when: function (a) { return has(a, "cRole", 30); }, tag: "Section 2.3, continued", name: "Ubuntu", def: [
+        "“A person is a person through other persons.” In this tradition from southern Africa, being fully human is an ideal you have to reach, and you cannot reach it alone.",
+        "So there are two duties: to become a better, more humane version of yourself, and to help the people around you do the same. What matters most about a person is the capacity for mutually supportive relationships." ], src: "Chapter 2, paragraphs 2.37 to 2.42" },
+      { t: "text", key: "uHelp", rows: 3, min: 30, when: function (a) { return has(a, "cRole", 30); }, label: "Four people, each told the next one had it covered. Pick one moment in the chain where someone could have helped the next person be better at their job. What would they have said, and to whom?" },
+      { t: "text", key: "rOut", rows: 3, min: 30, when: function (a) { return has(a, "uHelp", 30); }, label: "Where they run out. Both traditions build ethics out of relationships between people. The applicant’s only relationship was with a tool. What is left of a role duty, or of “through other persons,” when the other party is software?" }
+    ] },
+
+    { part: "Part 3: Write what is missing", title: "Built for a world without machines", blocks: [
+      { t: "term", tag: "Section 2.7", name: "The theories came first", def: [
+        "Every theory you just used was worked out for people dealing with people, long before any tool could decide anything. Nothing guarantees that it carries over.",
+        "The legal scholar Jacob Turner makes the point with driving. Traffic law assumes a human driver who can be held responsible and who owes a duty of care. A car that drives itself has no such duties. So the law needs new parts. The chapter says ethics may be in the same position: it may need new principles and new ideas." ], src: "Chapter 2, paragraphs 2.79 to 2.82" },
+      { t: "p", text: "You have already found the gaps. Here is what you wrote when each school ran out." },
+      { t: "doc", label: "Aristotle runs out", body: function (a) { return String(a.vOut || "").trim(); } },
+      { t: "doc", label: "Kant runs out", body: function (a) { return String(a.kOut || "").trim(); } },
+      { t: "doc", label: "Confucius and ubuntu run out", body: function (a) { return String(a.rOut || "").trim(); } },
+      { t: "choice", key: "hole", lock: true, label: "Which school has the biggest hole when a tool makes the decision?", options: TRAD },
+      { t: "text", key: "holeWhy", rows: 2, min: 20, when: function (a) { return !!a.hole; }, label: "Why that one?" },
+      { t: "p", when: function (a) { return has(a, "holeWhy", 20); }, text: "The rest of this is yours to write. You will make three things the chapter says ethics now needs: a new virtue, a new duty, and one more of your choice." }
+    ] },
+
+    { part: "Part 3: Write what is missing", title: "Create a virtue", blocks: [
+      { t: "p", text: function (a) { return "Earlier you named a middle path for working with tools: “" + String(a.vName || "").trim() + ".” Now make it a full virtue that could be taught to every new hire at Harlow Freight. Keep the name or improve it."; } },
+      { t: "text", key: "nvName", rows: 1, max: 60, min: 3, label: "The virtue" },
+      { t: "text", key: "nvLow", rows: 1, max: 120, min: 5, label: "Too little of it looks like …" },
+      { t: "text", key: "nvHigh", rows: 1, max: 120, min: 5, label: "Too much of it looks like …" },
+      { t: "text", key: "nvHabit", rows: 3, min: 30, label: "Virtues are built by practice. What would a new hire do every week, for a year, to build this one?" },
+      { t: "objection", when: function (a) { return has(a, "nvHabit", 30); }, tag: "The other side", text: "Aristotle thinks the virtues come as a set. Your virtue will sometimes mean handing in shortlists late and telling a vice president the certified tool is wrong. Which older virtue does yours depend on, and what happens to it in someone who lacks that one?" },
+      { t: "text", key: "nvReply", rows: 3, min: 30, when: function (a) { return has(a, "nvHabit", 30); }, label: "Answer that." }
+    ] },
+
+    { part: "Part 3: Write what is missing", title: "Create a duty", blocks: [
+      { t: "p", text: "Kant’s duties are owed by persons to persons. Write the duty that covers the moment when a tool stands between them." },
+      { t: "text", key: "ndDuty", rows: 3, min: 40, label: "The duty", hint: "Shape: “Anyone who [does what with a tool that decides about people] has a duty to [do what], owed to [whom].”" },
+      { t: "text", key: "ndMeans", rows: 2, min: 25, label: "Tie it to Kant. Which part of the formula of humanity does your duty protect: the applicant as an end, their consent, their dignity, or the user’s own capacity to act on principle?" },
+      { t: "text", key: "ndUniv", rows: 2, min: 25, label: "Run the universal law test. Every company on earth now follows your duty. What does that world cost, and would you still will it?" },
+      { t: "objection", when: function (a) { return has(a, "ndUniv", 25); }, tag: "The other side", text: "Month three: the person your duty falls on leaves, and the job stays open for ten weeks. Month five: the vendor quietly updates how the tool scores people. A duty that belongs to a person lapses when the person goes or is never told. Who holds yours then?" },
+      { t: "text", key: "ndReply", rows: 3, min: 30, when: function (a) { return has(a, "ndUniv", 25); }, label: "Rewrite your duty so it survives both." }
+    ] },
+
+    { part: "Part 3: Write what is missing", title: "Create one more", blocks: [
+      { t: "term", tag: "Section 2.7, continued", name: "Unfit for the future", def: [
+        "Ingmar Persson and Julian Savulescu argue that our moral feelings were formed in small groups with simple tools. We do not feel much responsibility for a harm we cause only in small part, to people we never see. Their example is climate change. Their conclusion is that we may need to update not only our theories but ourselves.",
+        "Look back at the four seats. Each person did a small part. None of them ever saw an applicant." ], src: "Chapter 2, paragraphs 2.83 to 2.85" },
+      { t: "choice", key: "build", lock: true, label: "Choose the third thing you will build.", hint: "Your choice locks.", options: BUILD },
+      { t: "text", key: "buildText", rows: 5, min: 80, when: function (a) { return !!a.build; }, label: function (a) { return BUILDQ[a.build] || ""; } },
+      { t: "choice", key: "buildFrom", when: function (a) { return has(a, "buildText", 80); }, label: "Which older idea is it an extension of?", options: TRAD },
+      { t: "objection", when: function (a) { return !!a.buildFrom; }, tag: "The other side", text: function (a) { return BUILDO[a.build]; } },
+      { t: "text", key: "buildReply", rows: 3, min: 30, when: function (a) { return !!a.buildFrom; }, label: "Answer that, and change your design if you need to." }
+    ] },
+
+    { part: "Part 3: Write what is missing", title: "Write section 2.8", blocks: [
+      { t: "p", lead: true, text: "Chapter 2 ends at section 2.7 by saying that ethics may need new ideas, without saying what they are. You have just written three. Now write the opening of the section that should come next." },
+      { t: "p", text: "The chapter adds one caution: nobody is saying the old theories should be thrown out. They are part of the answer. Your section has to say what it keeps." },
+      { t: "text", key: "secTitle", rows: 1, max: 100, min: 8, label: "Title of section 2.8" },
+      { t: "text", key: "section", rows: 9, max: 1800, min: 350, label: "Write six or seven sentences. State your new idea, say which old theories it extends and what it keeps from them, and use the Four Seats case as your example.",
+        ok: function (a) { return tradNamed(a) >= 2; },
+        meter: function (a) { return "Older traditions named: " + tradNamed(a) + " of 2 needed (Aristotle or virtue, Kant or duty, Confucius, ubuntu). Length: " + String(a.section || "").trim().length + " of 350 characters minimum."; } },
+      { t: "text", key: "you", rows: 2, min: 25, label: "Last one. Which of the four seats are you most likely to sit in after you graduate, and which of your three creations will you actually use there?" }
+    ] },
+    { part: "Done", title: "Your addendum to Chapter 2", summary: true }
+  );
+
+  window.LESSON = {
+    name: "Four Seats",
+    storageKey: "four-seats-v3",
+    share: ["The title and first two sentences of your section 2.8", "Your new virtue, with its two extremes", "Your new duty, as rewritten after the objection"],
+    steps: steps,
+    summary: function (a) {
+      return [
+        { h: "Who worked on this", items: [{ q: "Names", a: a.names }] },
+        { h: "Section 2.8: " + String(a.secTitle || "").trim(), items: [{ q: "Our section", a: a.section }, { q: "The seat we expect to sit in, and what we will use there", a: a.you }] },
+        { h: "What we created", items: [
+          { q: "A virtue", a: (a.nvName || "") + "\nToo little: " + (a.nvLow || "") + "\nToo much: " + (a.nvHigh || "") + "\nHow it is built: " + (a.nvHabit || "") + "\nWhich older virtue it depends on: " + (a.nvReply || "") },
+          { q: "A duty", a: (a.ndDuty || "") + "\nWhat it protects: " + (a.ndMeans || "") + "\nUniversal law test: " + (a.ndUniv || "") + "\nRewritten: " + (a.ndReply || "") },
+          { q: BUILDL[a.build] || "A third thing", a: (a.buildText || "") + "\nExtends: " + (TRADL[a.buildFrom] || "") + "\nReply to the objection: " + (a.buildReply || "") } ] },
+        { h: "Where the old schools ran out", items: [
+          { q: "Aristotle", a: a.vOut }, { q: "Kant", a: a.kOut }, { q: "Confucius and ubuntu", a: a.rOut },
+          { q: "The biggest hole", a: (TRADL[a.hole] || "") + ". " + (a.holeWhy || "") } ] },
+        { h: "Aristotle", items: [
+          { q: "Our middle path for working with tools", a: a.vName }, { q: "What that person does on Monday", a: a.vMonday },
+          { q: "What the HR manager is responsible for", a: ({ act: "Each Monday’s decision.", char: "The person she became.", none: "Neither." }[a.vResp] || "") + "\n" + (a.vReply || "") },
+          { q: "Who we would copy", a: a.vModel } ] },
+        { h: "Kant", items: [
+          { q: "Duty to others that was broken", a: DUTOL[a.kOther] }, { q: "Who owed it", a: a.kOtherWho },
+          { q: "Duty to herself the HR manager gave up", a: (DUTSL[a.kSelf] || "") + "\n" + (a.kSelfWhy || "") },
+          { q: "The vendor’s maxim", a: a.kMaxim }, { q: "Could we accept it as a universal law?", a: ({ yes: "Yes. ", no: "No. " }[a.kPass] || "") + (a.kPassWhy || "") } ] },
+        { h: "Confucius and ubuntu", items: [
+          { q: "The “small person” exhibit", a: (EXL[a.cSmall] || "") + "\n" + (a.cSmallWhy || "") },
+          { q: "A role duty, and a ritual the tool removed", a: a.cRole }, { q: "Where someone could have helped the next person", a: a.uHelp } ] },
+        { h: "Our four decisions", items: SEATS.map(function (s) { return { q: s.role, a: (s.short[a[s.k]] || "") + ". Reason: " + (a[s.k + "Why"] || "") }; })
+          .concat([{ q: "Qualified people turned away with our decisions", a: String(harm(a)) + " (at the company: " + BASE + ")" }, { q: "Who we held most responsible", a: (ROLEL[a.blame] || "") + ". " + (a.blameWhy || "") }]) }
+      ];
+    }
+  };
+})();
+
+</script>
+<script>
+(function () {
+  "use strict";
+  var L = window.LESSON, KEY = L.storageKey;
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  var state = { a: {}, rev: {}, step: 0 };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var s = JSON.parse(raw); if (s && s.a && s.rev) state = s; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  var A = function () { return state.a; };
+  var val = function (v) { return typeof v === "function" ? v(state.a) : v; };
+  var uid = 0, checks = [], updaters = [], whens = [];
+  var INPUTS = { text: 1, choice: 1, num: 1, quiz: 1, split: 1, cases: 1, reveal: 1 };
+
+  function filledText(k, min) { return String(state.a[k] || "").trim().length >= (min || 2); }
+  function changed() {
+    save();
+    var flip = whens.some(function (w) { return !!w.f(state.a) !== w.v; });
+    if (flip) {
+      var ae = document.activeElement, k = ae && ae.dataset ? ae.dataset.key : null, s0 = null, s1 = null;
+      try { s0 = ae.selectionStart; s1 = ae.selectionEnd; } catch (e) {}
+      show(true);
+      if (k) { var n = document.querySelector('[data-key="' + k + '"]'); if (n) { n.focus({ preventScroll: true }); try { if (s0 != null) n.setSelectionRange(s0, s1); } catch (e) {} } }
+      return;
+    }
+    updaters.forEach(function (f) { f(); }); nav();
+  }
+
+  var R = {
+    p: function (b) { var t = val(b.text); if (!t) return null; return el("p", b.lead ? "lead" : null, t); },
+    case: function (b) {
+      var d = el("div", "case"); d.appendChild(el("span", "tag", val(b.tag) || "The case")); d.appendChild(el("p", null, val(b.text)));
+      if (b.list) { var ul = el("ul"); val(b.list).forEach(function (x) { ul.appendChild(el("li", null, x)); }); d.appendChild(ul); }
+      return d;
+    },
+    term: function (b) {
+      var d = el("div", "term"); d.appendChild(el("span", "tag", b.tag || "The chapter’s name for it")); d.appendChild(el("h2", null, b.name));
+      [].concat(val(b.def)).forEach(function (t) { t = val(t); if (t) d.appendChild(el("p", null, t)); });
+      if (b.src) d.appendChild(el("p", "src", b.src));
+      return d;
+    },
+    text: function (b) {
+      var id = "f" + (++uid), q = el("div", "q"), lab = el("label", null, val(b.label)); lab.htmlFor = id; q.appendChild(lab);
+      if (b.hint) q.appendChild(el("span", "hint", val(b.hint)));
+      var t = b.rows === 1 ? el("input") : el("textarea"); if (b.rows === 1) t.type = "text"; else t.rows = b.rows || 3;
+      t.id = id; t.dataset.key = b.key; t.maxLength = b.max || 600; t.value = state.a[b.key] || ""; if (b.placeholder) t.placeholder = b.placeholder;
+      t.addEventListener("input", function () { state.a[b.key] = t.value; changed(); });
+      q.appendChild(t);
+      var extra = null; if (b.meter) { extra = el("span", "hint"); q.appendChild(extra); updaters.push(function () { extra.textContent = b.meter(state.a); }); }
+      checks.push(function () { return filledText(b.key, b.min) && (!b.ok || b.ok(state.a)); });
+      return q;
+    },
+    choice: function (b) {
+      var name = "c" + (++uid), q = el("div", "q"); q.setAttribute("role", "radiogroup"); q.appendChild(el("span", "label", val(b.label)));
+      if (b.hint) q.appendChild(el("span", "hint", val(b.hint)));
+      var box = el("div", "opts" + (b.row ? " row" : "")), locked = (b.lock && !!state.a[b.key]) || (b.lockAfter && !!state.rev[b.lockAfter]);
+      val(b.options).forEach(function (o, n) {
+        var l = el("label", "opt"), i = el("input"); i.type = "radio"; i.name = name; i.value = o.v; i.checked = state.a[b.key] === o.v; i.disabled = !!locked;
+        i.addEventListener("change", function () { state.a[b.key] = o.v; changed(); if (b.rerender || b.lock) show(true); });
+        var sp = el("span"); if (!b.row) sp.appendChild(el("i", null, String.fromCharCode(65 + n))); sp.appendChild(document.createTextNode(o.label));
+        l.appendChild(i); l.appendChild(sp); box.appendChild(l);
+      });
+      q.appendChild(box); checks.push(function () { return !!state.a[b.key]; }); return q;
+    },
+    doc: function (b) {
+      var d = el("div", "doc"), hd = el("div", "hd"); hd.appendChild(el("span", null, val(b.label))); if (b.kind) hd.appendChild(el("span", null, val(b.kind))); d.appendChild(hd);
+      var bd = el("div", "bd");
+      if (b.meta) { var m = el("div", "meta"); val(b.meta).forEach(function (r) { m.appendChild(el("span", null, r[0])); m.appendChild(el("b", null, r[1])); }); bd.appendChild(m); }
+      [].concat(val(b.body) || []).forEach(function (x) { x = val(x); if (x) bd.appendChild(el("p", null, x)); });
+      if (b.table) bd.appendChild(R.table(b.table));
+      if (b.foot) bd.appendChild(el("p", "foot", val(b.foot)));
+      d.appendChild(bd); return d;
+    },
+    objection: function (b) {
+      var x = val(b.text); if (!x) return null;
+      var d = el("div", "objection"); d.appendChild(el("span", "tag", b.tag || "Objection")); d.appendChild(el("p", null, x)); return d;
+    },
+    num: function (b) {
+      var id = "f" + (++uid), q = el("div", "q"), lab = el("label", null, val(b.label)); lab.htmlFor = id; q.appendChild(lab);
+      if (b.hint) q.appendChild(el("span", "hint", val(b.hint)));
+      var okK = b.key + "Ok", trK = b.key + "Tries", done = !!state.a[okK] || (state.a[trK] || 0) >= 3;
+      var row = el("div", "numrow"), i = el("input"), btn = el("button", null, "Check"); i.type = "text"; i.inputMode = "decimal"; i.id = id; i.value = state.a[b.key] || ""; i.disabled = done; btn.type = "button"; btn.disabled = done;
+      i.addEventListener("input", function () { state.a[b.key] = i.value; save(); });
+      function go() { var v = parseFloat(String(i.value).replace(/[%,\s]/g, "")); if (isNaN(v)) return; state.a[trK] = (state.a[trK] || 0) + 1; if (Math.abs(v - b.answer) <= (b.tol || 0) || (b.alt != null && Math.abs(v - b.alt) <= (b.altTol || 0))) state.a[okK] = true; save(); show(true); }
+      btn.addEventListener("click", go); i.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); go(); } });
+      row.appendChild(i); row.appendChild(btn); q.appendChild(row);
+      if (state.a[okK]) { q.appendChild(el("span", "fb good", "Correct.")); q.appendChild(el("div", "work", val(b.solution))); }
+      else if ((state.a[trK] || 0) >= 3) { q.appendChild(el("span", "fb bad", "Not this time. Here is the working.")); q.appendChild(el("div", "work", val(b.solution))); }
+      else if (state.a[trK]) q.appendChild(el("span", "fb bad", "Not yet. " + (val(b.wrong) || "Check your working and try again.") + " (" + (3 - state.a[trK]) + " tries left)"));
+      checks.push(function () { return !!state.a[okK] || (state.a[trK] || 0) >= 3; });
+      return q;
+    },
+    quiz: function (b) {
+      var name = "z" + (++uid), q = el("div", "q"); q.setAttribute("role", "radiogroup"); q.appendChild(el("span", "label", val(b.label)));
+      var box = el("div", "opts" + (b.row ? " row" : "")), picked = state.a[b.key];
+      b.options.forEach(function (o, n) {
+        var l = el("label", "opt"), i = el("input"); i.type = "radio"; i.name = name; i.checked = picked === o.v; i.disabled = !!picked;
+        i.addEventListener("change", function () { state.a[b.key] = o.v; changed(); show(true); });
+        var sp = el("span"); if (!b.row) sp.appendChild(el("i", null, String.fromCharCode(65 + n))); sp.appendChild(document.createTextNode(o.label));
+        l.appendChild(i); l.appendChild(sp); box.appendChild(l);
+      });
+      q.appendChild(box);
+      if (picked) { var right = picked === b.correct, lab = b.options.filter(function (o) { return o.v === b.correct; })[0].label;
+        q.appendChild(el("span", "fb " + (right ? "good" : "bad"), right ? "Correct." : "Not this one. The answer is " + lab + "."));
+        if (b.explain) q.appendChild(el("div", "work", val(b.explain))); }
+      checks.push(function () { return !!state.a[b.key]; }); return q;
+    },
+    split: function (b) {
+      var q = el("div", "q"); q.appendChild(el("span", "label", val(b.label)));
+      var cur = state.a[b.key]; if (!cur) { cur = {}; var init = b.init ? b.init(state.a) : null; b.parties.forEach(function (p) { cur[p.k] = init ? (Number(init[p.k]) || 0) : 0; }); state.a[b.key] = cur; }
+      var box = el("div", "split"), tot = el("div", "total"), inputs = {};
+      function sum() { return b.parties.reduce(function (s, p) { return s + (Number(cur[p.k]) || 0); }, 0); }
+      function upd() { var s = sum(); tot.textContent = "Total: " + s + " of 100" + (s === 100 ? "" : s < 100 ? "  (" + (100 - s) + " left to give)" : "  (" + (s - 100) + " too many)"); tot.className = "total" + (s === 100 ? "" : " bad"); }
+      b.parties.forEach(function (p) {
+        var r = el("div", "rowx"), id = "f" + (++uid), lab = el("label", null, p.label); lab.htmlFor = id; r.appendChild(lab);
+        var c = el("div", "ctl"), m = el("button", "small", "−"), i = el("input"), pl = el("button", "small", "+");
+        m.type = "button"; pl.type = "button"; m.setAttribute("aria-label", "5 fewer for " + p.label); pl.setAttribute("aria-label", "5 more for " + p.label);
+        i.type = "number"; i.min = 0; i.max = 100; i.step = 5; i.id = id; i.value = cur[p.k]; inputs[p.k] = i;
+        function set(v) { v = Math.max(0, Math.min(100, Math.round(Number(v) || 0))); cur[p.k] = v; i.value = v; upd(); changed(); }
+        m.addEventListener("click", function () { set(cur[p.k] - 5); }); pl.addEventListener("click", function () { set(cur[p.k] + 5); });
+        i.addEventListener("change", function () { set(i.value); });
+        c.appendChild(m); c.appendChild(i); c.appendChild(pl); r.appendChild(c); box.appendChild(r);
+      });
+      q.appendChild(box); q.appendChild(tot); upd(); checks.push(function () { return sum() === 100; }); return q;
+    },
+    cases: function (b) {
+      var cur = state.a[b.key] || (state.a[b.key] = {}), box = el("div", "cases");
+      b.items.forEach(function (it, n) {
+        var c = cur[it.k] || (cur[it.k] = {}), d = el("div", "item"); d.appendChild(el("p", null, it.text));
+        var name = "k" + (++uid), o1 = el("div", "opts row"), sub = el("div", "q");
+        [["fine", "Fine"], ["wrong", "Wrong"], ["depends", "Depends"]].forEach(function (o) {
+          var l = el("label", "opt"), i = el("input"); i.type = "radio"; i.name = name; i.checked = c.v === o[0];
+          i.addEventListener("change", function () { c.v = o[0]; if (o[0] === "fine") c.who = ""; sub.hidden = o[0] === "fine"; changed(); });
+          l.appendChild(i); l.appendChild(el("span", null, o[1])); o1.appendChild(l);
+        });
+        d.appendChild(o1);
+        sub.appendChild(el("span", "sub", "If something is wrong here, who or what is wronged?"));
+        var name2 = "k" + (++uid), o2 = el("div", "opts row");
+        b.who.forEach(function (o) {
+          var l = el("label", "opt"), i = el("input"); i.type = "radio"; i.name = name2; i.checked = c.who === o.v;
+          i.addEventListener("change", function () { c.who = o.v; changed(); });
+          l.appendChild(i); l.appendChild(el("span", null, o.label)); o2.appendChild(l);
+        });
+        sub.appendChild(o2); sub.hidden = !c.v || c.v === "fine"; d.appendChild(sub); box.appendChild(d);
+        checks.push(function () { return c.v === "fine" || (!!c.v && !!c.who); });
+      });
+      return box;
+    },
+    table: function (b) {
+      var w = el("div", "tablewrap"), t = el("table"), hr = el("tr"), num = b.num || [];
+      b.head.forEach(function (h, i) { var th = el("th", num.indexOf(i) >= 0 ? "n" : null, h); th.scope = "col"; hr.appendChild(th); }); t.appendChild(hr);
+      val(b.rows).forEach(function (r) { var tr = el("tr"); r.forEach(function (c, i) { tr.appendChild(el("td", num.indexOf(i) >= 0 ? "n" : null, String(c))); }); t.appendChild(tr); });
+      w.appendChild(t); return w;
+    },
+    reveal: function (b) {
+      if (state.rev[b.key]) return null;
+      var btn = el("button", "primary", b.button || "See what the chapter calls this"); btn.type = "button";
+      var mine = checks.slice();
+      function ready() { return mine.every(function (f) { return f(); }); }
+      updaters.push(function () { btn.disabled = !ready(); });
+      btn.addEventListener("click", function () { if (!ready()) return; state.rev[b.key] = true; save(); show(true, b.key); });
+      checks.push(function () { return !!state.rev[b.key]; });
+      var d = el("div"); d.appendChild(btn); return d;
+    }
+  };
+
+  function summary() {
+    var root = el("div", "sum"), secs = L.summary(state.a), lines = [L.name, ""];
+    var sh = el("div", "share"); sh.appendChild(el("strong", null, "For the share-out, be ready to read:")); var ul = el("ul");
+    L.share.forEach(function (x) { ul.appendChild(el("li", null, x)); }); sh.appendChild(ul); root.appendChild(sh);
+    secs.forEach(function (s) {
+      root.appendChild(el("h2", null, s.h)); lines.push(s.h.toUpperCase());
+      var dl = el("dl"); s.items.forEach(function (it) { var w = el("div"); w.appendChild(el("dt", null, it.q)); w.appendChild(el("dd", null, it.a || "—")); dl.appendChild(w); lines.push(it.q + "\n  " + (it.a || "-")); });
+      root.appendChild(dl); lines.push("");
+    });
+    var tools = el("div", "tools"), copy = el("button", "primary", "Copy my answers"), msg = el("span", "hint"), reset = el("button", null, "Start over"), armed = false;
+    copy.type = "button"; reset.type = "button";
+    var ta = el("textarea"); ta.readOnly = true; ta.rows = 8; ta.value = lines.join("\n"); ta.hidden = true; ta.setAttribute("aria-label", "Your answers as plain text");
+    copy.addEventListener("click", function () {
+      var fail = function () { ta.hidden = false; ta.focus(); ta.select(); msg.textContent = "Copy didn’t work here. Select the text below and copy it."; };
+      try { navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = "Copied. Paste it wherever your instructor asks."; }, fail); } catch (e) { fail(); }
+    });
+    reset.addEventListener("click", function () {
+      if (!armed) { armed = true; reset.textContent = "Confirm: erase all answers"; setTimeout(function () { armed = false; reset.textContent = "Start over"; }, 5000); return; }
+      state = { a: {}, rev: {}, step: 0 }; save(); show();
+    });
+    tools.appendChild(copy); tools.appendChild(reset); tools.appendChild(msg); root.appendChild(tools); root.appendChild(ta);
+    return root;
+  }
+
+  function show(keep, focusKey) {
+    var n = L.steps.length; state.step = Math.max(0, Math.min(n - 1, state.step | 0));
+    var st = L.steps[state.step], main = $("main"), y = window.scrollY;
+    main.textContent = ""; checks = []; updaters = []; whens = []; uid = 0;
+    $("lesson-name").textContent = L.name; $("step-count").textContent = "Step " + (state.step + 1) + " of " + n;
+    $("bar").style.width = Math.round(100 * (state.step + 1) / n) + "%";
+    $("part").textContent = st.part || ""; $("title").textContent = val(st.title);
+    var mark = null;
+    if (st.summary) main.appendChild(summary());
+    else st.blocks.forEach(function (b) {
+      if (b.after && !state.rev[b.after]) return;
+      if (b.when) { var wv = !!b.when(state.a); whens.push({ f: b.when, v: wv }); if (!wv) { if (INPUTS[b.t]) checks.push(function () { return false; }); return; } }
+      var node = R[b.t](b); if (!node) return;
+      if (focusKey && b.after === focusKey && !mark) mark = node;
+      main.appendChild(node);
+    });
+    updaters.forEach(function (f) { f(); }); nav(); save();
+    if (keep) { window.scrollTo(0, y); if (mark && mark.scrollIntoView) mark.scrollIntoView({ block: "start", behavior: "smooth" }); }
+    else { window.scrollTo(0, 0); }
+  }
+  function ok() { return checks.every(function (f) { return f(); }); }
+  function nav() {
+    var last = state.step === L.steps.length - 1, good = ok();
+    $("back").disabled = state.step === 0; $("next").hidden = last; $("next").disabled = !good;
+    $("why").textContent = last || good ? "" : "Answer everything on this page to continue.";
+  }
+  $("back").addEventListener("click", function () { if (state.step > 0) { state.step--; show(); } });
+  $("next").addEventListener("click", function () { if (ok() && state.step < L.steps.length - 1) { state.step++; show(); $("title").focus({ preventScroll: true }); } });
+  show();
+})();
+</script>
+</body>
+</html>
